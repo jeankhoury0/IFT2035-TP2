@@ -1,0 +1,13 @@
+# for the re_comp
+
+
+
+
+re_compile(in([a,b,c]), A).
+re_compile(in([a,b,c,d]), A).
+re_compile(in([a, b, c, d]), A)
+
+re_compile(notin([a,c]), A).
+
+
+re_compile(notin([any]), A). // will fail, nothing says that this can be regex
