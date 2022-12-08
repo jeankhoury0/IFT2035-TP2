@@ -93,3 +93,52 @@ s0 = step(s1)
 s0 = step(ANY, s1)
 
 
+
+
+nfa_search_step 
+
+
+step(S0)
+step([char -> step ])
+step([(char1 -> step1), char2 -> step2]) case
+
+epsilon = epsilon([], [L|Ls])
+
+
+
+
+
+
+[ s1b = step([('a' -> s1a)]), s1a = epsilon([], [s1b, s2]), s2 = step([('a' -> s3)]), s3 = success ] 
+
+
+nfa_search([ s1b = step([(97 -> s1a)]), s1a = epsilon([], [s1b, s2]), s2 = step([(97 -> s3)]), s3 = success ], "aaaa", Res).
+
+
+
+epsilon([], [s0, s1])
+
+
+
+nfa_match(NFA, epsilon(Marks, [NextState | NextStates]), Mark, Str, Group, Tail):-
+    writeln("THIS WORK"),
+    writeln(NextStates),
+    nfa_fetch_step_content(NFA, NextState, NewStep),
+    writeln("here"),
+    writeln(NewStep),
+    writeln("nope"),
+    nfa_match(NFA, NewStep, Mark, Str, Group, Tail);
+    nfa_fetch_step_content(NFA, NextState, NewStep),
+    writeln("THIS GOT executed"),
+    nfa_match(NFA, epsilon(Marks, NextStates), Mark, Str, Group, Tail)
+    .
+    %% missisng the NextStates
+
+
+
+
+----------
+
+
+
+[s0 = step([(108 -> s1), (101 -> s1)]), s1 = step(s2), s2 = success]

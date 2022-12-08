@@ -216,18 +216,13 @@ nfa_wf([State = Step | Ss], NFA) :-
 %% Marks contient les marques déjà vues, et Groups renvoie les sous-groupes
 %% nommés.
 nfa_match(_, success, [], Str, [], Str).
-nfa_match(_, success, [], Str, Group, Tail):- 
-    Tail = "b",
-    Group = ['a']. 
     
 nfa_match(NFA, step(Steps), Mark, Str, Group, Tail):-
     % write("⏐ nfa_match in steps: "), write(Steps), write(" with Str: "), writeln(Str),
     nfa_handle_step(Steps, Str, ResState, ResTail),
     % write("⏐ step returned ResState: "), write(ResState), write(" , Tail: "), writeln(Tail),
-    !, nfa_fetch_step_content(NFA, ResState, NextState),
-    % writeln(ResState),
-    nfa_match(NFA, NextState, Mark, Str, Group, ResTail ).
-    % writeln(NextStep),
+    nfa_fetch_step_content(NFA, ResState, NextState),
+    nfa_match(NFA, NextState, Mark, ResTail, Group, Tail ).
     % nfa_match(NFA, NextState ,Mark, Str, Group, NextStep).
 
 % nfa_match([NextState | NFA], State, Group, Str, Group, Tail):-
@@ -235,41 +230,53 @@ nfa_match(NFA, step(Steps), Mark, Str, Group, Tail):-
 %     nfa_match(NFA, NextState ,Group, Str, Group, Tail).
 
 
+nfa_match(NFA, epsilon(Marks, [NextState | NextStates]), Mark, Str, Group, Tail):-
+    nfa_fetch_step_content(NFA, NextState, NewStep),
+    nfa_match(NFA, NewStep, Mark, Str, Group, Tail);
+    nfa_fetch_step_content(NFA, NextState, NewStep),
+    nfa_match(NFA, epsilon(Marks, NextStates), Mark, Str, Group, Tail).
+
+    % nfa_match(NFA, NewStep, Mark, Str, Group, Tail);
+    % nfa_fetch_step_content(NFA, NextState, NewStep),
+    % writeln("THIS GOT executed")
+    
+    %% missisng the NextStates
+
 
 %% !!REMPLIR ICI!!
 
+nfa_handle_step([], [Char | Str], ResState, Tail). 
 
 %% nfa_handle_step(+Step, +String, -State, -Tail)
-
-
-nfa_handle_step([(Cond -> State) | Rest], [Char | String], ResState, Tail) :-
+nfa_handle_step([(Cond -> State) | Rest], [Char | Str], ResState, Tail) :-
     % writeln("STEP: handle step array"), 
     char_code(Char, AsciiChar), 
     ((Cond == AsciiChar) ->
         % writeln("STEP_ARRAY:  successfull match"),
-        % nfa_handle_step(Rest, Str, State);
-        Tail = String,
+        Tail = Str,
         ResState = State
         ;
         % write("STEP_ARRAY:  not matched. Char: "), write(Char), 
-        nfa_handle_step(Rest, [Char | String], _, [Char | String])
+        nfa_handle_step(Rest, [Char | Str], ResState, Tail)
         ).
 
+
 % Base case - everything else was filtered
-nfa_handle_step(Step, String, X) :-
+nfa_handle_step(Step, [Char | Str], X, Tail) :-
     % writeln("STEP: handle single step"),
-    Str = "", %% not sure but bcz its accepted we dont return it
+    Tail = Str, %% not sure but bcz its accepted we dont return it
     X = Step.
 
+nfa_handle_step([Step], Str, X, Tail) :-
+    nfa_handle_step(Step, Str, X, Tail). 
+
+% Go fetch the step content from the NFA and return the step
+%
 % nfa_fetch_step_content(+NFA, +State, -Res)
 nfa_fetch_step_content([(NFAState = Step) | NFA], State, Res) :-
-    % writeln(NFAState),
-    % writeln("in fetch"),
-    % writeln(State),
     (NFAState == State -> 
-        % writeln("IT MATCHED"),
-        Res = Step; 
-        nfa_fetch_step_content(NFA, State, _)).
+        Res = Step;
+        nfa_fetch_step_content(NFA, State, Res)).
     
 
 %% nfa_search_in_chars(+NFA, +Str, -Res)
@@ -282,7 +289,7 @@ nfa_search_in_chars(NFA, Str, Res) :-
     NFA = [(_State = Step) | _],
     nfa_match(NFA, Step, [], Str, Gs, Tail), append(FoundChars, Tail, Str),
     chars_to_string(FoundChars, Found),
-    Res = ['' = Found | Gs].
+    Res = ['' = Found | Gs]. 
 nfa_search_in_chars(NFA, [_|Str], Res) :-
     nfa_search_in_chars(NFA, Str, Res).
 
@@ -328,6 +335,17 @@ re_comp(String, E, B, NFA) :-
     "" = [] -> fail;
     string(String), string_chars(String, Chars), re_comp(Chars, E, B, NFA).
 %% !!REMPLIR ICI!!
+
+% REGEX: * \ character vide
+re_comp(+(RE), E, B, NFA) :- 
+    new_state(B),
+    new_state(C),
+    re_comp(RE, C, S1, [_ = NFA1]), 
+    NFA = [B = NFA1, C = epsilon([], [B, E])].
+
+
+
+
 % REGEX: EXACT MATCH 
 re_comp(RE, E, B, NFA) :-
     character(RE), 
@@ -335,26 +353,47 @@ re_comp(RE, E, B, NFA) :-
     char_code(RE, ASCII), 
     NFA = [B = step([ASCII -> E])].
 
-% in([a,b,c])
-re_comp(in(RE), E, B, NFA) :-
-    new_state(B),
-    give_state_for_range(RE, E, NFAPART),
-    writeln(NFAPART),
-    NFA = [B = step(NFAPART)].
-    
-
 %notin([a,b,c])
 re_comp(notin(RE), E, B, NFA) :-
     new_state(B),
     new_state(RejectState),
-    give_state_for_range(RE, RejectState, RejectStateList),
-    append(RejectStateList, [E], RejectStep),
-    NFA = [B = step(RejectStep)].
+    string_to_chars(RE, RElist),    % making sure that the Regex is a list
+    give_state_for_range(RElist, RejectState, RejectStateList),
+    append(RejectStateList, E, RejectStep),
+    NFA = [B = step(RejectStep), RejectState = epsilon([], [RejectState])].
 
-% epsilon()
-re_comp(epsilon, E, B, NFA) :-
+
+
+
+% in([a,b,c])
+re_comp(in(RE), E, B, NFA) :-
+    new_state(B),
+    string_to_chars(RE, RElist),    % making sure that the Regex is a list
+    give_state_for_range(RElist, E, NFAPART),
+    NFA = [B = step(NFAPART)].
+
+re_comp(?(RE), E, B, NFA) :-
+    new_state(B),
+    re_comp(RE, E, S1, [NFA1]),
+    NFA = [B = epsilon([], [S1, E]), NFA1].
+
+% epsilon() --- usefull?
+re_comp([], E, B, NFA) :-
     new_state(B),
     NFA = [B = epsilon([], [E])].
+
+
+%% TODO: Fix the multiple RE case
+%% re_comp(+RE, +EndState, -BeginState, -NFA)
+re_comp(RE1 \/ REs, E, B, NFA) :-
+    writeln(RE1),
+    new_state(B),
+    re_comp(REs, E, S1, [NFA1]),
+    re_comp(RE1, E, S2, [NFA2]),
+
+    NFA = [B = epsilon([], [S1, S2]), NFA1, NFA2],
+    writeln(NFA).
+
 
 
 %% Return the form [Char -> B] 
@@ -373,7 +412,7 @@ give_state_for_range(RE, B, NFA) :-
     character(RE),
     char_code(RE, ASCII), 
     NFA = [ASCII -> B].
-
+    
 give_state_for_range([RE], B, NFA) :-
     character(RE),
     give_state_for_range(RE, B, NFA).

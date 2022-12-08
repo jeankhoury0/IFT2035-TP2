@@ -1,0 +1,92 @@
+% avec 1 état a 1 success
+nfa_search([ s1b = step([(97 -> s1a)]), s1a = epsilon([], [s1b, s2]), s2 = step([(97 -> s3)]), s3 = success ], "aaaa", Res).
+
+nfa_search([s1 = success], "aa", Res) 
+    -> return 3 empty char
+
+nfa_search([s1 = step(s2), s2 = success], "aaaa", Res)
+
+
+
+
+% Testing with step 
+[s0 = step([(108 -> s1), (101 -> s1)]), s1 = success]
+    -> with hello it will return "e", "l", "l"
+
+
+nfa_search([s9=epsilon([], [s10, s8]), s10=step([(97->s9), (98->s9), (99->s9)]), s8=success], "", X).
+
+
+
+
+re_compile(*(in([a, b, c])), X).
+re_search(*(in([a,b,c])), "abc", X).
+search(*(in([a, b, c])), "abc", R).
+search(*(notin([a, b, c])), "abc", R).
+re_search(*(notin([a, b, c])), "abc", R).
+
+
+
+
+nfa_search([s42=epsilon([], [s43, s41]), s43=step([(97->s44), s42]), s41=success], "x", X).
+
+
+
+test("search a unique character in unique strig", [nondet]) :-
+    findall(S, search(a, "a", S), A),
+    findall(X, re_search(a, "a", X), B),
+    A == B.
+
+test("search a unique character in large string", [nondet]) :-
+    findall(S, search(a, "bacda", S), A),
+    findall(X, re_search(a, "bacda", X), B),
+    A == B.
+
+test("in with *", [nondet]) :-
+    NFA = *(in([a, b, c])),
+    STR = "abc",
+    find_search_result(NFA, STR, A, B), 
+    A == B.
+
+
+search(["(", name(k,*(any)), "=", name(v,*(any)), ")"], "(age=23) and (position=straight)", Res)
+
+
+
+
+
+re_comp(RE1 \/ RE2, E, B, NFA) :-
+    new_state(B),
+    % new_state(S1), 
+    % new_state(S2),
+    re_comp(RE1, E, S1, [NFA1]),
+    re_comp(RE2, E, S2, [NFA2]),
+
+    NFA = [B = epsilon([], [S1, S2]), NFA1, NFA2],
+    writeln(NFA).
+
+
+
+
+RE1 \/ RE2 \/ RE3
+RE1 \/ RE2
+and
+RE2 \/ RE3
+and
+RE1 \/ RE3
+
+
+
+
+
+R = [''="dd"] ;
+R = [''="d"] ;
+R = [''=""] ;
+R = [''="d"] ;
+R = [''=""] ;
+R = [''=""] ;
+R = [''=""] ;
+R = [''=""] ;
+R = [''="d"] ;
+R = [''=""] ;
+R = [''=""] ;
