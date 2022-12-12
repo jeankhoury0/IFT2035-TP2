@@ -218,13 +218,9 @@ nfa_wf([State = Step | Ss], NFA) :-
 nfa_match(_, success, [], Str, [], Str).
     
 nfa_match(NFA, step(Steps), Mark, Str, Group, Tail):-
-    % write("⏐ nfa_match in steps: "), write(Steps), write(" with Str: "), writeln(Str),
     nfa_handle_step(Steps, Str, ResState, ResTail),
-    % write("⏐ step returned ResState: "), write(ResState), write(" , Tail: "), writeln(Tail),
     nfa_fetch_step_content(NFA, ResState, NextState),
     nfa_match(NFA, NextState, Mark, ResTail, Group, Tail ).
-    % nfa_match(NFA, NextState ,Mark, Str, Group, NextStep).
-
 
 nfa_match(NFA, epsilon(Marks, [NextState | NextStates]), Mark, Str, Group, Tail):-
     nfa_fetch_step_content(NFA, NextState, NewStep),
@@ -238,22 +234,18 @@ nfa_handle_step([], [Char | Str], ResState, Tail).
 
 %% nfa_handle_step(+Step, +String, -State, -Tail)
 nfa_handle_step([(Cond -> State) | Rest], [Char | Str], ResState, Tail) :-
-    % writeln("STEP: handle step array"), 
     char_code(Char, AsciiChar), 
     ((Cond == AsciiChar) ->
-        % writeln("STEP_ARRAY:  successfull match"),
         Tail = Str,
         ResState = State
         ;
-        % write("STEP_ARRAY:  not matched. Char: "), write(Char), 
         nfa_handle_step(Rest, [Char | Str], ResState, Tail)
         ).
 
 
 % Base case - everything else was filtered
 nfa_handle_step(Step, [Char | Str], X, Tail) :-
-    % writeln("STEP: handle single step"),
-    Tail = Str, %% not sure but bcz its accepted we dont return it
+    Tail = Str,
     X = Step.
 
 nfa_handle_step([Step], Str, X, Tail) :-
