@@ -140,7 +140,12 @@
     test("[*NOTNULL] accepte +(a) avec abcd ") :-
         NFA = +(a),
         find_search_result(NFA, "abcd", A, B),
-        A == B. 
+        A == B.
+
+    test("[*NOTNULL] accepte +(a) avec abcd ") :-
+        NFA = +([h,e,l,l,o]),
+        find_search_result(NFA, "abcd", A, B),
+        A == B.  
 
 
 :- end_tests(noncomplex).
@@ -158,6 +163,57 @@
         STR = "abcd",
         find_search_result(NFA, STR, A, B), 
         A == B. 
+
+
+    test("match_time") :-
+        NFA = [any, any, ":", any, any, ?(a)],
+        STR = "12:30",
+        find_search_result(NFA, STR, A, B), 
+        A == B. 
+
+    test("match_time with optional seconds") :-
+        NFA = [any, any, ":", any, any, ?([":", any, any])],
+        % NFA = [any, any, ":", any, any, ?(":"), ?(any), ?(any)],
+        STR = "12:30:51",
+        find_search_result(NFA, STR, A, B), 
+        A == B.  
+
+        test("match_time with otpional seconds (bis)") :-
+        NFA = [any, any, ":", any, any, ?(":"), ?(any), ?(any)],
+        STR = "12:30:51",
+        find_search_result(NFA, STR, A, B), 
+        A == B.  
+
+    test("NOTNULL avec liste") :- 
+        NFA = +([a, b, c]),
+        STR = "ab",
+        find_search_result(NFA, STR, A, B), 
+        A == B.
+
+    test("OPTIONAL avec liste") :- 
+        NFA = [a, ?([a, b, c])],
+        STR = "ab",
+        find_search_result(NFA, STR, A, B), 
+        A == B. 
+
+
+    test("STAR avec liste") :- 
+        NFA = [a, *([a, b, c])],
+        STR = "ab",
+        find_search_result(NFA, STR, A, B), 
+        A == B.  
+
+    test("*NOTNULL avec liste") :- 
+        NFA = [a, +([a, b, c])],
+        STR = "ab",
+        find_search_result(NFA, STR, A, B), 
+        A == B.  
+
+    test("*NOTNULL avec notIn") :- 
+        NFA = [a, +(notin("abc"))],
+        STR = "ab",
+        find_search_result(NFA, STR, A, B), 
+        A == B.  
 
 
 :- end_tests(complex).

@@ -14,6 +14,11 @@ Or, en retournais l'état, nous ne retournons pas son contenue donc nous avons b
 Probleme des listes vides
 
 
+# Problèmes 
+
+## NFA de not_in
+- Au début nous avons concu notre NFA pour énuméré toutes les steps de charactère qui étais not-in vers success et dans ce cas on ne ferais que retourner ce qui n'est pas dans notre liste de not-in. Avec cette approche, par example, si j'avais [^abc], je retournerais touts les steps de d à Z et je les pointerais vers success. Or, nous avons demandé a Stefan c'est quoi le range des charactères ASQII a suporté et je pense qu'il nous a vue venir... Il nous a dis que c'étais illimité. Nous avons alors repensé et nous avons trouvé le complement de cette approche. Celà a mener a la création d'un "reject state" où, si l'on donne un charactère dans notre liste not-in, on l'envoi vers un état et a la fin, si tout est bon on envoi vers success. 
+Cette méthode étais bonne jusqu'à ce qu'on utilise la fonction ```re_search```. Ici, nous nous somme rendu compte que c'étais pas un NFA valide car nous ne pouvons pas juste retourné un état qui ne vas pas vers success. Finalement
 
 
 # Les tests
@@ -28,3 +33,16 @@ Nous avons très vite réalisé que de tester le tout a la main serais vraiment 
 
 ainsi, nous n'avons qu'a comparé le output de A avec celui de B. 
 Pour voir les tests utilisé [tp2_test.plt (via github gist)](https://gist.github.com/jeankhoury0/a6e835df89e4d1432bd6e588435d5aae)
+
+
+```mermaid
+stateDiagram
+    state C {
+    direction LR
+    [*] --> S0
+    S0 --> S1 : a
+    S1 --> [*] 
+    }
+
+    
+```

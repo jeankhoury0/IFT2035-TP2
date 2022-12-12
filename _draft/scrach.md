@@ -142,3 +142,10 @@ nfa_match(NFA, epsilon(Marks, [NextState | NextStates]), Mark, Str, Group, Tail)
 
 
 [s0 = step([(108 -> s1), (101 -> s1)]), s1 = step(s2), s2 = success]
+
+
+----------
+
+
+search(["(", name(k,*(any)), "=", name(v,*(any)), ")"], "(age=23) and (position=straight)", Res)
+

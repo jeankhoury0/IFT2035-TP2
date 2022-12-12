@@ -334,88 +334,84 @@ re_comp(*(RE), E, B, [B = epsilon([], [B1,E]) | NFA]) :-
 re_comp(String, E, B, NFA) :-
     "" = [] -> fail;
     string(String), string_chars(String, Chars), re_comp(Chars, E, B, NFA).
-%% !!REMPLIR ICI!!
 
-% REGEX: * \ character vide
+%% =============================== RE_COMP =============================== 
+% REGEX         +(RE)           Repetition non vide
 re_comp(+(RE), E, B, NFA) :- 
     new_state(B),
     new_state(C),
     re_comp(RE, C, S1, [_ = NFA1]), 
     NFA = [B = NFA1, C = epsilon([], [B, E])].
 
+% REGEX         ?(RE)           Characters optionel
+re_comp(?(RE), E, B, NFA) :- 
+    new_state(B),
+    re_comp(RE, E, S1, NFA1),
+    append([B = epsilon([], [S1, E])] ,NFA1, NFA).
 
-
-
-% REGEX: EXACT MATCH 
+% REGEX         (RE)            Exact Match 
 re_comp(RE, E, B, NFA) :-
     character(RE), 
     new_state(B),  
     char_code(RE, ASCII), 
     NFA = [B = step([ASCII -> E])].
 
-%notin([a,b,c])
+%REGEX          in(RE)          Accepte ce qui est dans RE
+re_comp(in(RE), E, B, NFA) :-
+    new_state(B),
+    string_to_chars(RE, RElist),    % optional conversion if user give string
+    give_steps_for_range(RElist, E, StateList),
+    NFA = [B = step(StateList)].
+
+%REGEX          notin(RE)       Complement de in(RE)
 re_comp(notin(RE), E, B, NFA) :-
     new_state(B),
     new_state(RejectState),
-    string_to_chars(RE, RElist),    % making sure that the Regex is a list
-    give_state_for_range(RElist, RejectState, RejectStateList),
+    string_to_chars(RE, RElist),    % optional conversion if user give string
+    give_steps_for_range(RElist, RejectState, RejectStateList),
     append(RejectStateList, E, RejectStep),
     NFA = [B = step(RejectStep), RejectState = epsilon([], [RejectState])].
 
-
-
-
-% in([a,b,c])
-re_comp(in(RE), E, B, NFA) :-
+%REGEX          ?(RE)           Charactere optionel
+re_comp(?(RE), E, B, NFA) :- 
     new_state(B),
-    string_to_chars(RE, RElist),    % making sure that the Regex is a list
-    give_state_for_range(RElist, E, NFAPART),
-    NFA = [B = step(NFAPART)].
+    re_comp(RE, E, S1, NFA1),
+    append([B = epsilon([], [S1, E])] ,NFA1, NFA).
 
-re_comp(?(RE), E, B, NFA) :-
-    new_state(B),
-    re_comp(RE, E, S1, [NFA1]),
-    NFA = [B = epsilon([], [S1, E]), NFA1].
-
-% epsilon() --- usefull?
+% REGEX         ""              Epsilon
 re_comp([], E, B, NFA) :-
     new_state(B),
     NFA = [B = epsilon([], [E])].
 
-
-%% TODO: Fix the multiple RE case
-%% re_comp(+RE, +EndState, -BeginState, -NFA)
-re_comp(RE1 \/ REs, E, B, NFA) :-
-    writeln(RE1),
+% REGEX         RE V REs        Ou (disjonction)
+re_comp(REs \/ RE1, E, B, NFA) :-
     new_state(B),
-    re_comp(REs, E, S1, [NFA1]),
-    re_comp(RE1, E, S2, [NFA2]),
+    new_state(E1),
+    new_state(E2),
+    re_comp(REs, E1, B1, NFA1),
+    re_comp(RE1, E2, B2, NFA2),
+    append(NFA1, NFA2, NFA3),
+    NFA4 = [B = epsilon([], [B1, B2]), 
+            E1 = epsilon([], [E]), 
+            E2 = epsilon([], [E])
+            ],
+    append(NFA4, NFA3, NFA).
 
-    NFA = [B = epsilon([], [S1, S2]), NFA1, NFA2],
-    writeln(NFA).
-
-
-
-%% Return the form [Char -> B] 
-%%
-%% give_state_for_range(+Char, +B, - NFAPART)
-% give_state_for_range()
-% give_state_for_range(RE, B, NFA) :-
-%     character(RE).
-
-give_state_for_range([RE|REs], B, NFA) :-
-    give_state_for_range(REs, B, NFA2),
-    give_state_for_range(RE, B, NFA1),
+% Rend les step conditonel pour in(RE) and notin(RE)
+% give_steps_for_range(+RegularExpressionList, +BeginState, -PartialNFA)
+give_steps_for_range([RE|REs], B, NFA) :-
+    give_steps_for_range(REs, B, NFA2),
+    give_steps_for_range(RE, B, NFA1),
     append(NFA1, NFA2, NFA).
 
-give_state_for_range(RE, B, NFA) :-
+give_steps_for_range(RE, B, NFA) :-
     character(RE),
     char_code(RE, ASCII), 
     NFA = [ASCII -> B].
     
-give_state_for_range([RE], B, NFA) :-
+give_steps_for_range([RE], B, NFA) :-
     character(RE),
-    give_state_for_range(RE, B, NFA).
+    give_steps_for_range(RE, B, NFA).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Élimination des cycles d'epsilon infinis
