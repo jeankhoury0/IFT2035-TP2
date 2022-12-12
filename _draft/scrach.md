@@ -149,3 +149,4 @@ nfa_match(NFA, epsilon(Marks, [NextState | NextStates]), Mark, Str, Group, Tail)
 
 search(["(", name(k,*(any)), "=", name(v,*(any)), ")"], "(age=23) and (position=straight)", Res)
 
+

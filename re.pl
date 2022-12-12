@@ -225,10 +225,6 @@ nfa_match(NFA, step(Steps), Mark, Str, Group, Tail):-
     nfa_match(NFA, NextState, Mark, ResTail, Group, Tail ).
     % nfa_match(NFA, NextState ,Mark, Str, Group, NextStep).
 
-% nfa_match([NextState | NFA], State, Group, Str, Group, Tail):-
-%     % writeln(State),  
-%     nfa_match(NFA, NextState ,Group, Str, Group, Tail).
-
 
 nfa_match(NFA, epsilon(Marks, [NextState | NextStates]), Mark, Str, Group, Tail):-
     nfa_fetch_step_content(NFA, NextState, NewStep),
@@ -236,14 +232,7 @@ nfa_match(NFA, epsilon(Marks, [NextState | NextStates]), Mark, Str, Group, Tail)
     nfa_fetch_step_content(NFA, NextState, NewStep),
     nfa_match(NFA, epsilon(Marks, NextStates), Mark, Str, Group, Tail).
 
-    % nfa_match(NFA, NewStep, Mark, Str, Group, Tail);
-    % nfa_fetch_step_content(NFA, NextState, NewStep),
-    % writeln("THIS GOT executed")
-    
-    %% missisng the NextStates
 
-
-%% !!REMPLIR ICI!!
 
 nfa_handle_step([], [Char | Str], ResState, Tail). 
 
@@ -397,6 +386,16 @@ re_comp(REs \/ RE1, E, B, NFA) :-
             ],
     append(NFA4, NFA3, NFA).
 
+
+% REGEX         name(x, RE)         Name
+re_comp(name(Name, RE), E, B, NFA) :- 
+    new_state(B), 
+    new_state(E1),
+    re_comp(RE, E1, B1, NFA1),
+    NFA2 = [B = epsilon([beg(Name)], [B1]),E1 =epsilon([end(Name)], [E])],
+    append(NFA2, NFA1, NFA ),
+    writeln(NFA).    
+
 % Rend les step conditonel pour in(RE) and notin(RE)
 % give_steps_for_range(+RegularExpressionList, +BeginState, -PartialNFA)
 give_steps_for_range([RE|REs], B, NFA) :-
@@ -430,7 +429,7 @@ nfa_epsilons(NFAi, NFAo) :- nfa_epsilons(NFAi, NFAi, NFAo).
 %% nfa_epsilons(+NFA, +NFAi, -NFAo)
 %% Boucle interne.
 nfa_epsilons(_, [], []).
-nfa_epsilons(NFA, [S = epsilon(_, Ss) | NFA1], [S = epsilon([], Ns) | NFA2]) :-
+nfa_epsilons(NFA, [S = epsilon(Marks, Ss) | NFA1], [S = epsilon(Marks, Ns) | NFA2]) :-
     !, nfa_epsilons_1(NFA, [S], Ss, Ns),
     nfa_epsilons(NFA, NFA1, NFA2).
 nfa_epsilons(NFA, [S | NFA1], [S | NFA2]) :- nfa_epsilons(NFA, NFA1, NFA2).
@@ -444,7 +443,7 @@ nfa_epsilons_1(NFA, Es, [S|Ss], Ns) :-
     member(S, Es)
     %% Si S est un état-epsilon qu'on a déjà vu, il n'y a rien de nouveau.
     -> nfa_epsilons_1(NFA, Es, Ss, Ns)
-    ;  (member(S = epsilon(_, Ss1), NFA)
+    ;  (member(S = epsilon(Marks, Ss1), NFA)
         %% Un nouvel état-epsilon.
        -> append(Ss1, Ss, Ss2),
           nfa_epsilons_1(NFA, [S|Es], Ss2, Ns)
