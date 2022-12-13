@@ -1,17 +1,19 @@
 # un commencement difficile
 
-Nous avons commmencé notre travaille en essayant de comprendre comment marche prolog et comment fonctionne les NFA. 
+Nous avons commmencé notre travaille en essayant de comprendre comment marche prolog et nous rafraichir comment fonctionne les NFA (nous avions déjà aborder le cours en introduction à l'informatique théorique). 
 
 Par la suite, nous avons commencé a implémenté la fonction nfa_search. Dans le fond, on cherche juste a faire un patern match sur 3 cas de step importants:
-    - Si le step est un "success" comme cas de base
-    - Si le step est de la forme step(...) donc on traite un de deux cas:
-        - Si nous avons un passage a un prochain état qui est conditionel a l'entrée, donc nous avons besoins de tester le branchement avec le prochain charactère. Si celui ci est bon, nous acceptons et renvoyons le next step a executé. Sinon, on renvoi et on essaye la prochaine condition.
-        - Si nous avons un passage a un prochain état inconditionel, nous "mangeons" un charactères et nous retournons le prochain état
-    - Si le step est epsilon(...), nous traitons les mêmes cas que pour step mais nous ne consomont pas de charactères. 
+    
+- Si le step est un "success" comme cas de base
+- Si le step est de la forme step(...) donc on traite un de deux cas:
+    - Si nous avons un passage a un prochain état qui est conditionel a l'entrée, donc nous avons besoins de tester le branchement avec le prochain charactère. Si celui ci est bon, nous acceptons et renvoyons le next step a executé. Sinon, on renvoi et on essaye la prochaine condition.
+    - Si nous avons un passage a un prochain état inconditionel, nous "mangeons" un charactères et nous retournons le prochain état
+- Si le step est epsilon(...), nous traitons les mêmes cas que pour step mais nous ne consomont pas de charactères. 
 
-Or, en retournais l'état, nous ne retournons pas son contenue donc nous avons besoins d'aller chercher dans notre NFA le contenu de l'état pour l'assigner a notre prochain "step". Celà est pris en charge par une fonction ```nfa_fetch_step_content(+NFA, +State, -Res)```. 
+- <Groupe nommé>
 
-Probleme des listes vides
+Or, en retournant l'état obtenu par le step, nous avons besoins d'aller chercher dans notre NFA le contenu de l'état pour l'assigner a notre prochain "step". Celà est pris en charge par une fonction ```nfa_fetch_step_content(+NFA, +State, -Res)```. 
+
 
 
 # Problèmes 
@@ -25,11 +27,15 @@ Cette méthode étais bonne jusqu'à ce qu'on utilise la fonction ```re_search``
 - Nous avons eu un problème par rapport a l'implémentation du NFA de disjonction du fais que celui-ci n'étais pas une liste et que selon notre 1ere implémentation tout l'état initial devais toujours se rendre vers une option de la disjonction (<voir figure disjonction>). Avec cette méthode on étais pas capable de transitioner tout les états finaux vers un seul état final. 
 La solution a été de crée un genre d'arbre binaire et d'avoir uniquement deux output ou deux input pour chaques noeud. (<Voir nouveau NFA>). 
 
-## La liste de 1 elem a la fin
+## Probleme des listes avec éléement unique
+Dans les fonctions de fectching (give_steps_for_range, nfa_handle_step), nous traversons une liste mais pour une raison obscure, le pattern matching ne match pas une liste avec 1 seul élement. Donc, par example ``` [RE|REs]``` ne permet pas de matcher [RE].
+Ainsi, nous avons du géré le cas des [Re] dans un matching unique.
 
 ## Par rapport au liste / string dans in or notin
+Dans la spécification nous n'étions pas cetains de l'argument que derais prendre ```in(RE)``` et ```notin(RE)```. Nous avons donc décider d'y aller avec la solution la plus élégante (selon nous en tout cas). Nous avons rajouté la ligne ```string_to_chars(RE, RElist)``` qui ne change rien si on envoi une liste mais si on envoi un string, ca va la convertir en liste. 
 
-
+# Disclamer sur l'implémentation de prolog utilsé
+Nous avons testé excessivemtn notre code sur SwiPl mais n'avons pas vraiment fais enormement de tests sur gprolog. Nous assumons, de part le commentaire de Stephan sur le forum que la version de prologue ne devrais pas faire une différence mais nous ne sommme pas 100% certains car le framework de test utiliisé n'est pas le même avec GNU. 
 
 # Les tests
 
@@ -46,7 +52,7 @@ Pour voir les tests utilisé [tp2_test.plt (via github gist)](https://gist.githu
 
 
 # Motif nommée
-- Nous avons modifié un petit peu le code d'epsilon pour que celui ci prennene en charge les marks. C'étais juste de rajouté la variable Marks au pattern Matching et le programme continue. 
+- Nous avons modifié un petit peu le code d'epsilon pour que celui ci prennene en charge les marks. C'étais juste de rajouté la variable Marks au pattern Matching et le programme continue.  
 
 
 ```mermaid
@@ -56,7 +62,7 @@ stateDiagram
     [*] --> S0
     S0 --> S1 : a
     S1 --> [*] 
-    }
-
-    
+    } 
 ```
+
+

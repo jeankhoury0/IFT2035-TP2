@@ -215,6 +215,8 @@ nfa_wf([State = Step | Ss], NFA) :-
 %% un état terminal et renvoie le reste non-consommé de la chaîne dans Tail.
 %% Marks contient les marques déjà vues, et Groups renvoie les sous-groupes
 %% nommés.
+%% =============================== RE_COMP =============================== 
+
 nfa_match(_, success, [], Str, [], Str).
     
 nfa_match(NFA, step(Steps), Mark, Str, Group, Tail):-
@@ -222,17 +224,44 @@ nfa_match(NFA, step(Steps), Mark, Str, Group, Tail):-
     nfa_fetch_step_content(NFA, ResState, NextState),
     nfa_match(NFA, NextState, Mark, ResTail, Group, Tail ).
 
-nfa_match(NFA, epsilon(Marks, [NextState | NextStates]), Mark, Str, Group, Tail):-
-    nfa_fetch_step_content(NFA, NextState, NewStep),
+
+nfa_match(NFA, epsilon([], [NState | NStates]), Mark, Str, Group, Tail) :-
+    nfa_fetch_step_content(NFA, NState, NewStep),
     nfa_match(NFA, NewStep, Mark, Str, Group, Tail);
-    nfa_fetch_step_content(NFA, NextState, NewStep),
-    nfa_match(NFA, epsilon(Marks, NextStates), Mark, Str, Group, Tail).
+    nfa_fetch_step_content(NFA, NState, NewStep),
+    nfa_match(NFA, epsilon(Marks, NStates), Mark, Str, Group, Tail).
+
+% take the string and put it in group, put the mark where it needs to be and
+% continue with empty epsilon and clean Str
+nfa_match(NFA, epsilon([beg(Name)], NState), Mark, Str, Group, Tail ) :-
+    NMark = [Name | Mark],
+    NGroup = [Str| Group],
+    nfa_match(NFA, epsilon([], NState), NMark, "", NGroup, Tail).
+
+% code non complété
+
+% nfa_match(NFA, epsilon([end(Name)], NState), Mark, Str, Group, Tail ) :-
+%     writeln("Matched (mark) "),
+%     remove_mark_from_list(Mark, Name, NMark), 
+%     writeln(NMark),
+%     NGroup = [Str| Group],
+%     nfa_match(NFA, epsilon([], NState), NMark, "", NGroup, Tail).
 
 
+% remove_mark_from_list([List| Lists], List, NList) :-
+%        remove_mark_from_list(Lists, Mark, NN ).
+ 
 
-nfa_handle_step([], [Char | Str], ResState, Tail). 
+% remove_mark_from_list([List| Lists], Mark, NList) :-
+%     append(NList, List, NN),
+%     remove_mark_from_list(Lists, Mark, NN ).
 
+
+%% Check for the for all form Cond -> State 
+%
 %% nfa_handle_step(+Step, +String, -State, -Tail)
+nfa_handle_step([], [_ | _], _, _). 
+
 nfa_handle_step([(Cond -> State) | Rest], [Char | Str], ResState, Tail) :-
     char_code(Char, AsciiChar), 
     ((Cond == AsciiChar) ->
@@ -242,9 +271,7 @@ nfa_handle_step([(Cond -> State) | Rest], [Char | Str], ResState, Tail) :-
         nfa_handle_step(Rest, [Char | Str], ResState, Tail)
         ).
 
-
-% Base case - everything else was filtered
-nfa_handle_step(Step, [Char | Str], X, Tail) :-
+nfa_handle_step(Step, [_ | Str], X, Tail) :-
     Tail = Str,
     X = Step.
 
@@ -321,7 +348,7 @@ re_comp(String, E, B, NFA) :-
 re_comp(+(RE), E, B, NFA) :- 
     new_state(B),
     new_state(C),
-    re_comp(RE, C, S1, [_ = NFA1]), 
+    re_comp(RE, C, _, [_ = NFA1]), 
     NFA = [B = NFA1, C = epsilon([], [B, E])].
 
 % REGEX         ?(RE)           Characters optionel
@@ -385,8 +412,7 @@ re_comp(name(Name, RE), E, B, NFA) :-
     new_state(E1),
     re_comp(RE, E1, B1, NFA1),
     NFA2 = [B = epsilon([beg(Name)], [B1]),E1 =epsilon([end(Name)], [E])],
-    append(NFA2, NFA1, NFA ),
-    writeln(NFA).    
+    append(NFA2, NFA1, NFA).    
 
 % Rend les step conditonel pour in(RE) and notin(RE)
 % give_steps_for_range(+RegularExpressionList, +BeginState, -PartialNFA)
@@ -468,6 +494,8 @@ re_compile(RE, NFA) :-
 %% à "search(RE, Str, Res)".
 re_search(RE, Str, Res) :-
         re_compile(RE, NFA),
+        writeln("NFA: "),
+        writeln(NFA),
         (nfa_wf(NFA)
             -> nfa_search(NFA, Str, Res);
           Res = re_compile_error).

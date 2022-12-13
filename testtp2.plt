@@ -215,6 +215,11 @@
         find_search_result(NFA, STR, A, B), 
         A == B.  
 
+    test("*(*(any)") :- 
+        NFA=  "*(*(any)", 
+        STR = "abcd",
+        find_search_result(NFA, STR, A, B), 
+        A == B.  
 
 :- end_tests(complex).
 

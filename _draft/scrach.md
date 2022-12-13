@@ -150,3 +150,30 @@ nfa_match(NFA, epsilon(Marks, [NextState | NextStates]), Mark, Str, Group, Tail)
 search(["(", name(k,*(any)), "=", name(v,*(any)), ")"], "(age=23) and (position=straight)", Res)
 
 
+[
+    s41= step([(40->s37)]),
+    s37= epsilon([beg(k)],[s40,s36]),
+    s38 = epsilon([end(k)],[s36]),
+    s39 = epsilon([],[s40,s36]),
+    s40 = step(s39),
+    s36 = step([(61->s32)]),
+    s32 = epsilon([beg(v)],[s35,s31]),
+    s33 = epsilon([end(v)],[s31]),
+    s34 = epsilon([],[s35,s31]),
+    s35 = step(s34),
+    s31 = step([(41->s30)]),
+    s30 = success]
+
+
+[
+    s65=step([(40->s61)]),
+    s61=epsilon([beg(k)],[s63]),
+    s62=epsilon([end(k)],[s60]),
+    s63=epsilon([],[s64,s62]),
+    s64=step(s63),
+    s60=step([(61->s56)]),
+    s56=epsilon([beg(v)],[s58]),
+    s57=epsilon([end(v)],[s55]),
+    s58=epsilon([],[s59,s57]),
+    s59=step(s58),
+    s55=step([(41->s54)])]
